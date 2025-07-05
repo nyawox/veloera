@@ -1,0 +1,92 @@
+name: Sync with upstream
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-and-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/Veloera/Veloera.git || true
+          git fetch upstream
+          git fetch origin
+
+      - name: Rebuild cherry branch
+        run: |
+          cp .github/workflows/sync.yml /tmp/sync.yml
+          
+          git checkout -B cherry-new upstream/main
+          
+          mkdir -p .github/workflows
+          cp /tmp/sync.yml .github/workflows/sync.yml
+          git add .github/workflows/sync.yml
+          git commit -m "ci: preserve sync workflow" || true
+          
+          git cherry-pick origin/fix/bedrock-custom-base-url || {
+            git status
+            exit 1
+          }
+
+      - name: Check if rebuild is needed
+        id: check
+        run: |
+          if git diff --quiet cherry cherry-new; then
+            echo "No changes needed"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected, need to build"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            git checkout cherry
+            git reset --hard cherry-new
+          fi
+
+          git branch -D cherry-new
+
+      - name: Push updated branch
+        if: steps.check.outputs.has_changes == 'true'
+        run: |
+          git push --force-with-lease origin cherry
+
+      - name: Set up Docker Buildx
+        if: steps.check.outputs.has_changes == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: steps.check.outputs.has_changes == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        if: steps.check.outputs.has_changes == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
