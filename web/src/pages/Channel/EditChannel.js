@@ -257,6 +257,7 @@ function type2secretPrompt(type) {
     case 23:
       return '按照如下格式输入：AppId|SecretId|SecretKey，多个密钥使用英文逗号分隔';
     case 33:
+    case 50:
       return '按照如下格式输入：Ak|Sk|Region，多个密钥使用英文逗号分隔';
     default:
       return '请输入渠道对应的鉴权密钥，多个密钥使用英文逗号分隔';

@@ -50,6 +50,7 @@ const (
 	APITypeXinference
 	APITypeXai
 	APITypeGitHub
+	APITypeAwsConverse
 	APITypeDummy // this one is only for count, do not add any channel after this
 )
 
@@ -84,6 +85,8 @@ func ChannelType2APIType(channelType int) (int, bool) {
 		apiType = APITypePerplexity
 	case common.ChannelTypeAws:
 		apiType = APITypeAws
+	case common.ChannelTypeAwsConverse:
+		apiType = APITypeAwsConverse
 	case common.ChannelTypeCohere:
 		apiType = APITypeCohere
 	case common.ChannelTypeDify:

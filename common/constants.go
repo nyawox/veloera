@@ -269,6 +269,7 @@ const (
 	ChannelTypeXinference     = 47
 	ChannelTypeXai            = 48
 	ChannelTypeGitHub         = 49
+	ChannelTypeAwsConverse    = 50
 	ChannelTypeDummy          // this one is only for count, do not add any channel after this
 
 )
@@ -324,4 +325,5 @@ var ChannelBaseURLs = []string{
 	"",                                          //47
 	"https://api.x.ai",                          //48
 	"https://models.github.ai/inference",        //49
+	"",                                          //50
 }

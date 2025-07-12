@@ -21,6 +21,7 @@ import (
 	"veloera/relay/channel"
 	"veloera/relay/channel/ali"
 	"veloera/relay/channel/aws"
+	"veloera/relay/channel/aws-converse"
 	"veloera/relay/channel/baidu"
 	"veloera/relay/channel/baidu_v2"
 	"veloera/relay/channel/claude"
@@ -76,6 +77,8 @@ func GetAdaptor(apiType int) channel.Adaptor {
 		return &perplexity.Adaptor{}
 	case constant.APITypeAws:
 		return &aws.Adaptor{}
+	case constant.APITypeAwsConverse:
+		return &aws_converse.Adaptor{}
 	case constant.APITypeCohere:
 		return &cohere.Adaptor{}
 	case constant.APITypeDify:
