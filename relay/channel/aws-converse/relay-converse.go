@@ -51,6 +51,21 @@ func wrapErr(err error) *dto.OpenAIErrorWithStatusCode {
 	}
 }
 
+func stopReasonConverse2OpenAI(reason string) string {
+	switch reason {
+	case "end_turn", "stop_sequence":
+		return "stop"
+	case "tool_use":
+		return "tool_calls"
+	case "max_tokens":
+		return "length"
+	case "content_filtered", "guardrail_intervened":
+		return "content_filter"
+	default:
+		return reason
+	}
+}
+
 type ConverseRequest struct {
 	Messages                     []types.Message               `json:"messages"`
 	System                       []types.SystemContentBlock    `json:"system,omitempty"`
@@ -312,7 +327,7 @@ func handleConverseStreamEvent(c *gin.Context, converseInfo *ConverseResponseInf
 		if len(converseInfo.ToolCalls) > 0 {
 			finishReason = "tool_calls"
 		} else if e.Value.StopReason != "" {
-			finishReason = string(e.Value.StopReason)
+			finishReason = stopReasonConverse2OpenAI(string(e.Value.StopReason))
 		}
 		finalDelta := dto.ChatCompletionsStreamResponseChoiceDelta{}
 		response = createOpenAIStreamChunk(finalDelta, converseInfo)
@@ -417,7 +432,7 @@ func converseHandler(c *gin.Context, resp *bedrockruntime.ConverseOutput, info *
 		openaiResponse.Choices[0].FinishReason = "tool_calls"
 		openaiResponse.Choices[0].Message.SetToolCalls(toolCalls)
 	} else {
-		openaiResponse.Choices[0].FinishReason = string(resp.StopReason)
+		openaiResponse.Choices[0].FinishReason = stopReasonConverse2OpenAI(string(resp.StopReason))
 		contentBytes, _ := json.Marshal(responseTextBuilder.String())
 		openaiResponse.Choices[0].Message.Content = contentBytes
 	}
