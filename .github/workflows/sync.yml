@@ -33,15 +33,15 @@ jobs:
       - name: Rebuild cherry branch
         run: |
           cp .github/workflows/sync.yml /tmp/sync.yml
-          
+
           git checkout -B cherry-new upstream/main
-          
+
           mkdir -p .github/workflows
           cp /tmp/sync.yml .github/workflows/sync.yml
           git add .github/workflows/sync.yml
           git commit -m "ci: preserve sync workflow" || true
-          
-          git cherry-pick origin/fix/bedrock-custom-base-url || {
+
+          git cherry-pick origin/feat/aws-converse-channel || {
             git status
             exit 1
           }
